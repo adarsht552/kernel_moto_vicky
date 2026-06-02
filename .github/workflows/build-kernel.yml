@@ -35,15 +35,15 @@ jobs:
           tar -xf clang.tar.gz -C clang
           echo "$(pwd)/clang/bin" >> $GITHUB_PATH
 
-      - name: Apply KernelSU Next
+      - name: Apply KernelSU Next with Susfs
         run: |
           cd kernel_moto_vicky
-          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs
 
       - name: Apply Susfs patch
         run: |
           cd kernel_moto_vicky
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git ../susfs4ksu
+          git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.10 ../susfs4ksu
           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.10.patch .
           patch -p1 < 50_add_susfs_in_gki-android13-5.10.patch || true
           cp ../susfs4ksu/kernel_patches/fs/* fs/
