@@ -35,10 +35,10 @@ jobs:
           tar -xf clang.tar.gz -C clang
           echo "$(pwd)/clang/bin" >> $GITHUB_PATH
 
-      - name: Apply KernelSU Next with Susfs
+      - name: Apply KernelSU Next
         run: |
           cd kernel_moto_vicky
-          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s stable
 
       - name: Apply Susfs patch
         run: |
