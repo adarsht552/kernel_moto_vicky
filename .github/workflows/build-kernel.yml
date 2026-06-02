@@ -38,7 +38,7 @@ jobs:
       - name: Apply KernelSU Next
         run: |
           cd kernel_moto_vicky
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/main/kernel/setup.sh" | bash - 
+          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
 
       - name: Apply Susfs patch
         run: |
