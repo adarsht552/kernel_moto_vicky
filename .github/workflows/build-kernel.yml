@@ -1,0 +1,73 @@
+name: Build Susfs Kernel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout kernel source
+        uses: actions/checkout@v3
+        with:
+          repository: adarsht552/kernel_moto_vicky
+          ref: 12-oss
+          path: kernel_moto_vicky
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison flex libssl-dev \
+            make gcc git curl python3 \
+            libelf-dev lz4 zip
+
+      - name: Setup clang toolchain
+        run: |
+          mkdir -p clang
+          wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/clang-r450784d.tar.gz -O clang.tar.gz
+          tar -xf clang.tar.gz -C clang
+
+      - name: Apply KernelSU Next
+        run: |
+          cd kernel_moto_vicky
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/main/kernel/setup.sh" | bash -s main
+
+      - name: Apply Susfs patch
+        run: |
+          cd kernel_moto_vicky
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git ../susfs4ksu
+          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.10.patch .
+          patch -p1 < 50_add_susfs_in_gki-android13-5.10.patch || true
+          cp ../susfs4ksu/kernel_patches/fs/* fs/
+          cp ../susfs4ksu/kernel_patches/include/linux/* include/linux/
+
+      - name: Build kernel
+        run: |
+          cd kernel_moto_vicky
+          export PATH=$(pwd)/../clang/bin:$PATH
+          export ARCH=arm64
+          export SUBARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          export CC=clang
+          make O=out ARCH=arm64 gki_defconfig
+          make O=out ARCH=arm64 -j$(nproc) \
+            CC=clang \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            LLVM=1 \
+            LLVM_IAS=1
+
+      - name: Package kernel
+        run: |
+          git clone https://github.com/osm0sis/AnyKernel3.git AnyKernel3
+          cp kernel_moto_vicky/out/arch/arm64/boot/Image.gz-dtb AnyKernel3/ 2>/dev/null || \
+          cp kernel_moto_vicky/out/arch/arm64/boot/Image.gz AnyKernel3/ 2>/dev/null || \
+          cp kernel_moto_vicky/out/arch/arm64/boot/Image AnyKernel3/
+          cd AnyKernel3
+          zip -r9 ../susfs-kernel-vicky.zip . -x .git\*
+
+      - name: Upload kernel zip
+        uses: actions/upload-artifact@v3
+        with:
+          name: susfs-kernel-vicky
+          path: susfs-kernel-vicky.zip
