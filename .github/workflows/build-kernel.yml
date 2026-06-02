@@ -6,6 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -50,6 +51,7 @@ jobs:
           cp ../susfs4ksu/kernel_patches/include/linux/* include/linux/
 
       - name: Build kernel
+        timeout-minutes: 90
         run: |
           cd kernel_moto_vicky
           export ARCH=arm64
@@ -59,7 +61,7 @@ jobs:
           export LLVM=1
           export LLVM_IAS=1
           make O=out ARCH=arm64 gki_defconfig
-          make O=out ARCH=arm64 -j$(nproc) \
+          make O=out ARCH=arm64 -j2 \
             CC=clang \
             CROSS_COMPILE=aarch64-linux-gnu- \
             LLVM=1 \
